@@ -1,0 +1,99 @@
+﻿@page "/weatherlist"
+@rendermode InteractiveServer
+
+<PageTitle>Weather</PageTitle>
+
+<h1>Weather</h1>
+
+<p>This component demonstrates showing data.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <section>
+        <div class="columns">
+            <div class="card has-border has-background-black has-text-white column">
+                Date
+            </div>
+            <div class="card has-border has-background-black has-text-white column">
+                Temp. (C)
+            </div>
+            <div class="card has-border has-background-black has-text-white column">
+                Temp. (F)
+            </div>
+            <div class="card has-border has-background-black has-text-white column">
+                Summary
+            </div>
+        </div>
+        <SortableList Id="sortable" Items="forecasts" OnUpdate="@SortList" Context="forecast">
+            <SortableItemTemplate>
+                <div class="columns">
+                    <div class="card column">
+                        @forecast.Date.ToShortDateString()
+                    </div>
+                    <div class="card column">
+                        @forecast.TemperatureC
+                    </div>
+                    <div class="card column">
+                        @forecast.TemperatureF
+                    </div>
+                    <div class="card column">
+                        @forecast.Summary
+                    </div>
+                </div>
+            </SortableItemTemplate>
+        </SortableList>
+    </section>
+}
+
+@code {
+    private List<WeatherForecast>? forecasts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        await Task.Delay(500);
+
+        var startDate = DateOnly.FromDateTime(DateTime.Now);
+        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
+        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            {
+                Date = startDate.AddDays(index),
+                TemperatureC = Random.Shared.Next(-20, 55),
+                Summary = summaries[Random.Shared.Next(summaries.Length)]
+            }).ToList();
+    }
+
+    private class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+
+    private void SortList((int oldIndex, int newIndex) indices)
+    {
+        // deconstruct the tuple
+        var (oldIndex, newIndex) = indices;
+
+        var items = this.forecasts;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count)
+        {
+            items.Insert(newIndex, itemToMove);
+        }
+        else
+        {
+            items.Add(itemToMove);
+        }
+
+        StateHasChanged();
+    }
+}
+
